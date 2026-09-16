@@ -44,8 +44,8 @@
 - [x] T009 [P] Define Pydantic schemas for Session, SourcePublic, AskRequest, AskResponse, and Error in `backend/app/models/schemas.py` aligned with `specs/001-csv-faq-agent/contracts/openapi.yaml`
 - [x] T010 Create FastAPI app entry with CORS, router include, and `GET /api/v1/health` in `backend/app/main.py` and `backend/app/api/routes.py`
 - [x] T011 Implement session create/get handlers (`POST /api/v1/session`, `GET /api/v1/session`) with `X-Session-Id` support in `backend/app/api/routes.py`
-- [ ] T012 Add frontend HTTP client skeleton (session create/get, base URL from `BACKEND_URL`) in `frontend/api_client.py`
-- [ ] T013 Add minimal Streamlit shell that creates/stores a session id and shows connection/health status in `frontend/app.py`
+- [x] T012 Add frontend HTTP client skeleton (session create/get, base URL from `BACKEND_URL`) in `frontend/api_client.py`
+- [x] T013 Add minimal Streamlit shell that creates/stores a session id and shows connection/health status in `frontend/app.py`
 
 **Checkpoint**: Foundation ready — health works; session can be created; FE can reach BE; user story implementation can begin
 
