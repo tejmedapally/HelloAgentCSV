@@ -42,8 +42,8 @@
 - [x] T007 Implement settings loader for `ANTHROPIC_API_KEY`, model name, temperature, preview row count, and max upload size in `backend/app/config.py`
 - [x] T008 [P] Implement in-memory session store (create/get/delete session, attach sources) in `backend/app/services/session_store.py` per `specs/001-csv-faq-agent/data-model.md`
 - [x] T009 [P] Define Pydantic schemas for Session, SourcePublic, AskRequest, AskResponse, and Error in `backend/app/models/schemas.py` aligned with `specs/001-csv-faq-agent/contracts/openapi.yaml`
-- [ ] T010 Create FastAPI app entry with CORS, router include, and `GET /api/v1/health` in `backend/app/main.py` and `backend/app/api/routes.py`
-- [ ] T011 Implement session create/get handlers (`POST /api/v1/session`, `GET /api/v1/session`) with `X-Session-Id` support in `backend/app/api/routes.py`
+- [x] T010 Create FastAPI app entry with CORS, router include, and `GET /api/v1/health` in `backend/app/main.py` and `backend/app/api/routes.py`
+- [x] T011 Implement session create/get handlers (`POST /api/v1/session`, `GET /api/v1/session`) with `X-Session-Id` support in `backend/app/api/routes.py`
 - [ ] T012 Add frontend HTTP client skeleton (session create/get, base URL from `BACKEND_URL`) in `frontend/api_client.py`
 - [ ] T013 Add minimal Streamlit shell that creates/stores a session id and shows connection/health status in `frontend/app.py`
 
