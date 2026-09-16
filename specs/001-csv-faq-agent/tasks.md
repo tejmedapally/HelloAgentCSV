@@ -78,10 +78,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Harden CSV validation (empty rows, size limit, non-CSV) with clear error messages in `backend/app/services/csv_service.py`
-- [ ] T021 [US2] Complete sources API: `GET /api/v1/sources`, `DELETE /api/v1/sources`, multi-file upload behavior, and public preview payloads in `backend/app/api/routes.py`
-- [ ] T022 [US2] Extend `frontend/api_client.py` with `list_sources` and `clear_sources`
-- [ ] T023 [US2] Update `frontend/app.py` to show per-file previews, active source filenames, multi-file upload, clear-all action, and upload error display
+- [x] T020 [P] [US2] Harden CSV validation (empty rows, size limit, non-CSV) with clear error messages in `backend/app/services/csv_service.py`
+- [x] T021 [US2] Complete sources API: `GET /api/v1/sources`, `DELETE /api/v1/sources`, multi-file upload behavior, and public preview payloads in `backend/app/api/routes.py`
+- [x] T022 [US2] Extend `frontend/api_client.py` with `list_sources` and `clear_sources`
+- [x] T023 [US2] Update `frontend/app.py` to show per-file previews, active source filenames, multi-file upload, clear-all action, and upload error display
 
 **Checkpoint**: User Stories 1 and 2 both work; multi-upload + preview + clear are solid
 

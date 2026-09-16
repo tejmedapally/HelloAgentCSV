@@ -91,6 +91,10 @@ class BackendClient:
         Args:
             files: List of (filename, content_bytes) pairs.
             session_id: Optional override; defaults to the remembered session.
+
+        Returns:
+            JSON body (`sources` list). When some files fail validation but
+            others succeed, includes `upload_warnings` from the response header.
         """
         sid = self._require_session_id(session_id)
         if not files:
@@ -105,7 +109,30 @@ class BackendClient:
             files=multipart,
         )
         response.raise_for_status()
+        data = response.json()
+        warnings = response.headers.get("X-Upload-Warnings")
+        if warnings:
+            data["upload_warnings"] = warnings
+        return data
+
+    def list_sources(self, session_id: str | None = None) -> dict[str, Any]:
+        """GET /api/v1/sources — active sources with preview payloads."""
+        sid = self._require_session_id(session_id)
+        response = self._client.get(
+            "/api/v1/sources",
+            headers={SESSION_HEADER: sid},
+        )
+        response.raise_for_status()
         return response.json()
+
+    def clear_sources(self, session_id: str | None = None) -> None:
+        """DELETE /api/v1/sources — clear all sources in the session."""
+        sid = self._require_session_id(session_id)
+        response = self._client.delete(
+            "/api/v1/sources",
+            headers={SESSION_HEADER: sid},
+        )
+        response.raise_for_status()
 
     def ask(
         self,

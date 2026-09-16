@@ -110,10 +110,15 @@ def get_session(
     responses={400: {"model": Error}, 404: {"model": Error}},
 )
 async def upload_sources(
+    response: Response,
     files: list[UploadFile] = File(...),
     x_session_id: str | None = Header(default=None, alias=SESSION_HEADER),
 ) -> SourcesList:
-    """Upload one or more CSV files into the session's active source set."""
+    """Upload one or more CSV files into the session's active source set.
+
+    Valid files are attached even when some siblings fail. If every file
+    fails validation, returns 400 and attaches nothing.
+    """
     session_id = _require_session_id(x_session_id)
     _get_session_or_404(session_id)
 
@@ -133,20 +138,46 @@ async def upload_sources(
         except CsvParseError as exc:
             errors.append(f"{filename}: {exc}")
 
-    if errors and not parsed:
+    if not parsed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="; ".join(errors),
-        )
-    if errors:
-        # Partial success still attaches good files; surface problems clearly.
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="; ".join(errors),
+            detail="; ".join(errors) if errors else "No valid CSV files in upload",
         )
 
     session = session_store.attach_sources(session_id, parsed)
+    if errors:
+        # Partial success: keep good files; surface sibling failures to the client.
+        response.headers["X-Upload-Warnings"] = "; ".join(errors)
     return SourcesList(sources=[_source_to_public(s) for s in session.sources])
+
+
+@router.get(
+    "/sources",
+    response_model=SourcesList,
+    responses={400: {"model": Error}, 404: {"model": Error}},
+)
+def list_sources(
+    x_session_id: str | None = Header(default=None, alias=SESSION_HEADER),
+) -> SourcesList:
+    """Return active CSV sources with public preview payloads."""
+    session_id = _require_session_id(x_session_id)
+    session = _get_session_or_404(session_id)
+    return SourcesList(sources=[_source_to_public(s) for s in session.sources])
+
+
+@router.delete(
+    "/sources",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={400: {"model": Error}, 404: {"model": Error}},
+)
+def clear_sources(
+    x_session_id: str | None = Header(default=None, alias=SESSION_HEADER),
+) -> Response:
+    """Clear all sources in the session (session itself is kept)."""
+    session_id = _require_session_id(x_session_id)
+    _get_session_or_404(session_id)
+    session_store.clear_sources(session_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(

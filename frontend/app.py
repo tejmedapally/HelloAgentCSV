@@ -44,6 +44,14 @@ def _ensure_session(client: BackendClient) -> str:
     return sid
 
 
+def _set_sources(sources: list) -> None:
+    st.session_state.sources = sources
+    st.session_state.session_summary = {
+        "id": st.session_state.get("session_id"),
+        "sources": sources,
+    }
+
+
 client = _get_client()
 
 st.subheader("Backend connection")
@@ -69,7 +77,7 @@ with col2:
             data = client.create_session()
             st.session_state.session_id = data["id"]
             st.session_state.session_error = None
-            st.session_state.sources = data.get("sources", [])
+            _set_sources(data.get("sources", []))
         except (HTTPError, OSError) as exc:
             st.session_state.session_error = _error_detail(exc)
 
@@ -82,6 +90,27 @@ st.subheader("Session")
 session_id = st.session_state.get("session_id")
 if session_id:
     st.info(f"Session ID: `{session_id}`")
+    refresh_col, clear_col = st.columns(2)
+    with refresh_col:
+        if st.button("Refresh sources", use_container_width=True):
+            try:
+                listed = client.list_sources(session_id)
+                _set_sources(listed.get("sources", []))
+                st.session_state.session_error = None
+            except (HTTPError, OSError, ValueError) as exc:
+                st.session_state.session_error = _error_detail(exc)
+    with clear_col:
+        if st.button("Clear all sources", use_container_width=True):
+            try:
+                client.clear_sources(session_id)
+                _set_sources([])
+                st.session_state.answer = None
+                st.session_state.upload_error = None
+                st.session_state.upload_warnings = None
+                st.session_state.session_error = None
+                st.success("All sources cleared.")
+            except (HTTPError, OSError, ValueError) as exc:
+                st.session_state.session_error = _error_detail(exc)
 else:
     st.write("No session yet — one will be created automatically on upload.")
 
@@ -100,27 +129,48 @@ if st.button("Upload to session", type="primary", disabled=not uploads):
     try:
         _ensure_session(client)
         files = [(f.name, f.getvalue()) for f in uploads]
+        before = len(st.session_state.get("sources") or [])
         result = client.upload_sources(files)
         sources = result.get("sources", [])
-        st.session_state.sources = sources
-        st.session_state.session_summary = {"id": client.session_id, "sources": sources}
+        _set_sources(sources)
+        added = max(0, len(sources) - before)
         st.session_state.upload_error = None
         st.session_state.answer = None
-        st.success(f"Uploaded {len(sources)} source(s).")
+        warnings = result.get("upload_warnings")
+        st.session_state.upload_warnings = warnings
+        st.success(f"Accepted {added} file(s). Active sources: {len(sources)}.")
     except (HTTPError, OSError, ValueError) as exc:
         st.session_state.upload_error = _error_detail(exc)
+        st.session_state.upload_warnings = None
+        # Refresh list in case a prior partial attach left sources on the server.
+        try:
+            if client.session_id:
+                listed = client.list_sources()
+                _set_sources(listed.get("sources", []))
+        except (HTTPError, OSError, ValueError):
+            pass
 
 if st.session_state.get("upload_error"):
     st.error(st.session_state.upload_error)
+if st.session_state.get("upload_warnings"):
+    st.warning(f"Some files were skipped: {st.session_state.upload_warnings}")
 
 sources = st.session_state.get("sources") or []
 if sources:
     st.write("**Active sources**")
+    filenames = [str(src.get("filename") or "unnamed") for src in sources]
+    st.caption(", ".join(f"`{name}`" for name in filenames))
     for src in sources:
-        st.write(
-            f"- `{src.get('filename')}` — {src.get('row_count', '?')} rows, "
-            f"columns: {', '.join(src.get('columns') or [])}"
-        )
+        name = src.get("filename") or "unnamed"
+        rows = src.get("row_count", "?")
+        cols = ", ".join(src.get("columns") or [])
+        with st.expander(f"{name} — {rows} rows", expanded=False):
+            st.write(f"Columns: {cols}")
+            preview = src.get("preview_rows") or []
+            if preview:
+                st.dataframe(preview, use_container_width=True)
+            else:
+                st.caption("No preview rows available.")
 
 st.divider()
 st.subheader("Ask a question")
@@ -157,7 +207,6 @@ if answer:
         st.warning("Not found in uploaded data")
     else:
         st.error("Error from agent")
-    # text_area makes copy-to-clipboard straightforward in the browser
     st.text_area(
         "Answer text",
         value=answer.get("text", ""),
@@ -165,9 +214,9 @@ if answer:
         disabled=True,
         label_visibility="collapsed",
     )
-    filenames = answer.get("source_filenames") or []
-    if filenames:
-        st.caption("Sources: " + ", ".join(filenames))
+    answer_files = answer.get("source_filenames") or []
+    if answer_files:
+        st.caption("Sources: " + ", ".join(answer_files))
 
 st.divider()
 st.caption(
