@@ -95,10 +95,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [P] [US3] Add concise on-screen instructions and clear section headings (Upload, Ask, Answer) in `frontend/app.py`
-- [ ] T025 [P] [US3] Tune Streamlit layout/theme defaults for a clean simple UI in `frontend/.streamlit/config.toml`
-- [ ] T026 [US3] Make answer area copy-friendly (full text visible, code/text block or equivalent) and show answer `status` subtly in `frontend/app.py`
-- [ ] T027 [US3] Disable or guard Ask when no sources are active with an inline prompt to upload first in `frontend/app.py`
+- [x] T024 [P] [US3] Add concise on-screen instructions and clear section headings (Upload, Ask, Answer) in `frontend/app.py`
+- [x] T025 [P] [US3] Tune Streamlit layout/theme defaults for a clean simple UI in `frontend/.streamlit/config.toml`
+- [x] T026 [US3] Make answer area copy-friendly (full text visible, code/text block or equivalent) and show answer `status` subtly in `frontend/app.py`
+- [x] T027 [US3] Disable or guard Ask when no sources are active with an inline prompt to upload first in `frontend/app.py`
 
 **Checkpoint**: All three user stories independently functional; UI is self-explanatory
 

@@ -7,9 +7,22 @@ from httpx import HTTPError, HTTPStatusError
 
 from api_client import BackendClient
 
-st.set_page_config(page_title="Hello Agent", page_icon="📄", layout="centered")
+st.set_page_config(
+    page_title="Hello Agent",
+    page_icon="📄",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+)
+
 st.title("Hello Agent")
-st.caption("Upload CSVs and ask questions grounded in your data")
+st.caption("Answers come only from your uploaded CSV files — not from general knowledge.")
+
+st.info(
+    "**How to use:**  \n"
+    "1. **Upload** one or more CSV files and confirm the preview.  \n"
+    "2. **Ask** a question in plain English.  \n"
+    "3. **Copy** the answer into email or chat."
+)
 
 
 def _get_client() -> BackendClient:
@@ -52,80 +65,46 @@ def _set_sources(sources: list) -> None:
     }
 
 
+def _status_label(status: str) -> str:
+    labels = {
+        "ok": "Found in uploaded data",
+        "not_found": "Not found in uploaded data",
+        "error": "Could not answer",
+    }
+    return labels.get(status, status or "unknown")
+
+
 client = _get_client()
 
-st.subheader("Backend connection")
-st.write(f"**BACKEND_URL:** `{client.base_url}`")
+# --- Primary flow: Upload → Ask → Answer ---
 
-col1, col2 = st.columns(2)
+st.header("1. Upload")
+st.write("Add FAQ, policy, or product CSV files. Open a file below to preview the first rows.")
 
-with col1:
-    if st.button("Check health", use_container_width=True):
-        try:
-            payload = client.health()
-            st.session_state.health_ok = True
-            st.session_state.health_detail = payload
-            st.session_state.health_error = None
-        except (HTTPError, OSError) as exc:
-            st.session_state.health_ok = False
-            st.session_state.health_detail = None
-            st.session_state.health_error = _error_detail(exc)
-
-with col2:
-    if st.button("Create session", use_container_width=True):
-        try:
-            data = client.create_session()
-            st.session_state.session_id = data["id"]
-            st.session_state.session_error = None
-            _set_sources(data.get("sources", []))
-        except (HTTPError, OSError) as exc:
-            st.session_state.session_error = _error_detail(exc)
-
-if st.session_state.get("health_ok") is True:
-    st.success(f"Backend healthy: `{st.session_state.health_detail}`")
-elif st.session_state.get("health_ok") is False:
-    st.error(f"Backend unreachable: {st.session_state.health_error}")
-
-st.subheader("Session")
-session_id = st.session_state.get("session_id")
-if session_id:
-    st.info(f"Session ID: `{session_id}`")
-    refresh_col, clear_col = st.columns(2)
-    with refresh_col:
-        if st.button("Refresh sources", use_container_width=True):
-            try:
-                listed = client.list_sources(session_id)
-                _set_sources(listed.get("sources", []))
-                st.session_state.session_error = None
-            except (HTTPError, OSError, ValueError) as exc:
-                st.session_state.session_error = _error_detail(exc)
-    with clear_col:
-        if st.button("Clear all sources", use_container_width=True):
-            try:
-                client.clear_sources(session_id)
-                _set_sources([])
-                st.session_state.answer = None
-                st.session_state.upload_error = None
-                st.session_state.upload_warnings = None
-                st.session_state.session_error = None
-                st.success("All sources cleared.")
-            except (HTTPError, OSError, ValueError) as exc:
-                st.session_state.session_error = _error_detail(exc)
-else:
-    st.write("No session yet — one will be created automatically on upload.")
-
-if st.session_state.get("session_error"):
-    st.error(st.session_state.session_error)
-
-st.divider()
-st.subheader("Upload CSVs")
 uploads = st.file_uploader(
-    "Choose one or more CSV files",
+    "CSV files",
     type=["csv"],
     accept_multiple_files=True,
+    label_visibility="collapsed",
+    help="Select one or more .csv files from your computer.",
 )
 
-if st.button("Upload to session", type="primary", disabled=not uploads):
+upload_col, clear_col = st.columns([2, 1])
+with upload_col:
+    upload_clicked = st.button(
+        "Upload to session",
+        type="primary",
+        disabled=not uploads,
+        use_container_width=True,
+    )
+with clear_col:
+    clear_clicked = st.button(
+        "Clear all sources",
+        disabled=not st.session_state.get("session_id"),
+        use_container_width=True,
+    )
+
+if upload_clicked and uploads:
     try:
         _ensure_session(client)
         files = [(f.name, f.getvalue()) for f in uploads]
@@ -142,13 +121,25 @@ if st.button("Upload to session", type="primary", disabled=not uploads):
     except (HTTPError, OSError, ValueError) as exc:
         st.session_state.upload_error = _error_detail(exc)
         st.session_state.upload_warnings = None
-        # Refresh list in case a prior partial attach left sources on the server.
         try:
             if client.session_id:
                 listed = client.list_sources()
                 _set_sources(listed.get("sources", []))
         except (HTTPError, OSError, ValueError):
             pass
+
+if clear_clicked:
+    try:
+        sid = _ensure_session(client)
+        client.clear_sources(sid)
+        _set_sources([])
+        st.session_state.answer = None
+        st.session_state.upload_error = None
+        st.session_state.upload_warnings = None
+        st.session_state.ask_error = None
+        st.success("All sources cleared. Upload a CSV before asking again.")
+    except (HTTPError, OSError, ValueError) as exc:
+        st.session_state.upload_error = _error_detail(exc)
 
 if st.session_state.get("upload_error"):
     st.error(st.session_state.upload_error)
@@ -164,30 +155,39 @@ if sources:
         name = src.get("filename") or "unnamed"
         rows = src.get("row_count", "?")
         cols = ", ".join(src.get("columns") or [])
-        with st.expander(f"{name} — {rows} rows", expanded=False):
+        with st.expander(f"{name} — {rows} rows", expanded=len(sources) == 1):
             st.write(f"Columns: {cols}")
             preview = src.get("preview_rows") or []
             if preview:
                 st.dataframe(preview, use_container_width=True)
             else:
                 st.caption("No preview rows available.")
+else:
+    st.caption("No files uploaded yet.")
 
 st.divider()
-st.subheader("Ask a question")
+st.header("2. Ask")
+st.write("Type a support-style question. Answers use only the active CSVs above.")
+
+has_sources = bool(sources)
+if not has_sources:
+    st.warning("Upload at least one CSV in **Upload** before you can ask.")
+
 question = st.text_area(
-    "Question",
-    placeholder="e.g. What is the shipping time?",
+    "Your question",
+    placeholder="e.g. What is the return window? What are visiting hours?",
     height=100,
+    disabled=not has_sources,
 )
-ask_disabled = not question.strip() or not sources
 
-if ask_disabled and question.strip() and not sources:
-    st.warning("Upload at least one CSV before asking.")
+can_ask = has_sources and bool(question.strip())
+if has_sources and not question.strip():
+    st.caption("Enter a question, then click Ask.")
 
-if st.button("Ask", type="primary", disabled=ask_disabled):
+if st.button("Ask", type="primary", disabled=not can_ask):
     try:
         _ensure_session(client)
-        with st.spinner("Asking the agent…"):
+        with st.spinner("Looking up your files…"):
             answer = client.ask(question)
         st.session_state.answer = answer
         st.session_state.ask_error = None
@@ -198,27 +198,70 @@ if st.button("Ask", type="primary", disabled=ask_disabled):
 if st.session_state.get("ask_error"):
     st.error(st.session_state.ask_error)
 
+st.divider()
+st.header("3. Answer")
+st.write("Select the text below and copy it for email or chat.")
+
 answer = st.session_state.get("answer")
 if answer:
-    status = answer.get("status", "")
-    if status == "ok":
-        st.success("Answer")
-    elif status == "not_found":
-        st.warning("Not found in uploaded data")
-    else:
-        st.error("Error from agent")
-    st.text_area(
-        "Answer text",
-        value=answer.get("text", ""),
-        height=160,
-        disabled=True,
-        label_visibility="collapsed",
-    )
+    status = str(answer.get("status") or "")
+    st.caption(f"Status: {_status_label(status)} (`{status or 'unknown'}`)")
+    answer_text = str(answer.get("text") or "")
+    # st.code keeps full text visible and easy to select/copy in one action.
+    st.code(answer_text, language=None)
     answer_files = answer.get("source_filenames") or []
     if answer_files:
-        st.caption("Sources: " + ", ".join(answer_files))
+        st.caption("Based on: " + ", ".join(answer_files))
+else:
+    st.caption("Your answer will appear here after you ask a question.")
 
+# --- Secondary: connection / session diagnostics ---
 st.divider()
-st.caption(
-    "Start the API with: `uv run uvicorn app.main:app --reload --port 8000` from `backend/`."
-)
+with st.expander("Connection & session (optional)", expanded=False):
+    st.write(f"**BACKEND_URL:** `{client.base_url}`")
+    diag1, diag2 = st.columns(2)
+    with diag1:
+        if st.button("Check health", use_container_width=True):
+            try:
+                payload = client.health()
+                st.session_state.health_ok = True
+                st.session_state.health_detail = payload
+                st.session_state.health_error = None
+            except (HTTPError, OSError) as exc:
+                st.session_state.health_ok = False
+                st.session_state.health_detail = None
+                st.session_state.health_error = _error_detail(exc)
+    with diag2:
+        if st.button("Create session", use_container_width=True):
+            try:
+                data = client.create_session()
+                st.session_state.session_id = data["id"]
+                st.session_state.session_error = None
+                _set_sources(data.get("sources", []))
+            except (HTTPError, OSError) as exc:
+                st.session_state.session_error = _error_detail(exc)
+
+    if st.session_state.get("health_ok") is True:
+        st.success(f"Backend healthy: `{st.session_state.health_detail}`")
+    elif st.session_state.get("health_ok") is False:
+        st.error(f"Backend unreachable: {st.session_state.health_error}")
+
+    session_id = st.session_state.get("session_id")
+    if session_id:
+        st.info(f"Session ID: `{session_id}`")
+        if st.button("Refresh sources from backend"):
+            try:
+                listed = client.list_sources(session_id)
+                _set_sources(listed.get("sources", []))
+                st.session_state.session_error = None
+            except (HTTPError, OSError, ValueError) as exc:
+                st.session_state.session_error = _error_detail(exc)
+    else:
+        st.caption("No session yet — one is created automatically on upload.")
+
+    if st.session_state.get("session_error"):
+        st.error(st.session_state.session_error)
+
+    st.caption(
+        "Start the API with: `uv run uvicorn app.main:app --reload --port 8000` from `backend/`."
+    )
