@@ -24,8 +24,8 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create monorepo directories `backend/app/api/`, `backend/app/models/`, `backend/app/services/`, `backend/tests/`, `frontend/`, and `datasets/` at repository root
-- [ ] T002 Move sample CSVs from `Datasets/` into `datasets/` (`ecommerce_faqs.csv`, `credit_card_terms.csv`, `hospital_policy.csv`, `saas_docs.csv`) and leave a short note in `Datasets/README.md` pointing to `datasets/` (or remove empty `Datasets/` if unused)
+- [x] T001 Create monorepo directories `backend/app/api/`, `backend/app/models/`, `backend/app/services/`, `backend/tests/`, `frontend/`, and `datasets/` at repository root
+- [x] T002 Move sample CSVs from `Datasets/` into `datasets/` (`ecommerce_faqs.csv`, `credit_card_terms.csv`, `hospital_policy.csv`, `saas_docs.csv`) and leave a short note in `Datasets/README.md` pointing to `datasets/` (or remove empty `Datasets/` if unused)
 - [ ] T003 [P] Initialize backend Python project with FastAPI, Uvicorn, Pandas, LangChain, langchain-experimental, langchain-anthropic, python-multipart in `backend/pyproject.toml` (or `backend/requirements.txt`)
 - [ ] T004 [P] Initialize frontend Python project with Streamlit and httpx in `frontend/pyproject.toml` (or `frontend/requirements.txt`)
 - [ ] T005 [P] Add root `.gitignore` entries for `.venv/`, `__pycache__/`, `.env`, `.streamlit/secrets.toml`, and Docker override files; add `backend/.env.example` and `frontend/.env.example` without real secrets
