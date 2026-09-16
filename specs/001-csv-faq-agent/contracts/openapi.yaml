@@ -1,0 +1,251 @@
+openapi: 3.0.3
+info:
+  title: Hello Agent CSV FAQ API
+  version: 1.0.0
+  description: >
+    Session-scoped CSV upload, preview, and data-only Q&A via Claude-backed
+    dataframe agent. Consumed by the Streamlit frontend.
+servers:
+  - url: http://localhost:8000
+    description: Local backend
+paths:
+  /api/v1/health:
+    get:
+      summary: Liveness check
+      operationId: health
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/v1/session:
+    post:
+      summary: Create a new session
+      operationId: createSession
+      responses:
+        "201":
+          description: Session created
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                description: Optional session cookie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+    get:
+      summary: Get current session summary
+      operationId: getSession
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Session summary including sources metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/sources:
+    get:
+      summary: List active CSV sources with previews
+      operationId: listSources
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Active sources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sources:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SourcePublic"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      summary: Upload one or more CSV files
+      operationId: uploadSources
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [files]
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: Files accepted; returns updated source list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sources:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SourcePublic"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Clear all sources in the session
+      operationId: clearSources
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "204":
+          description: Sources cleared
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/ask:
+    post:
+      summary: Ask a natural-language question against active sources
+      operationId: askQuestion
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskRequest"
+      responses:
+        "200":
+          description: Answer payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskResponse"
+        "400":
+          description: No sources or empty question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "502":
+          description: Upstream model/provider failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    SessionId:
+      name: X-Session-Id
+      in: header
+      required: false
+      description: >
+        Session UUID. If omitted on mutating routes, server may create a
+        session and return its id in the response body and/or Set-Cookie.
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Session not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Session:
+      type: object
+      required: [id, sources]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourcePublic"
+
+    SourcePublic:
+      type: object
+      required: [id, filename, columns, row_count, preview_rows]
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        columns:
+          type: array
+          items:
+            type: string
+        row_count:
+          type: integer
+          minimum: 0
+        preview_rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: First few rows for UI preview
+
+    AskRequest:
+      type: object
+      required: [question]
+      properties:
+        question:
+          type: string
+          minLength: 1
+
+    AskResponse:
+      type: object
+      required: [text, status]
+      properties:
+        text:
+          type: string
+        status:
+          type: string
+          enum: [ok, not_found, error]
+        source_filenames:
+          type: array
+          items:
+            type: string
+
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
