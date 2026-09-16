@@ -1,0 +1,18 @@
+[project]
+name = "hello-agent-frontend"
+version = "0.1.0"
+description = "Hello Agent CSV FAQ Streamlit frontend"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit>=1.40.0",
+    "httpx>=0.27.0",
+]
+
+[tool.uv]
+package = false
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
