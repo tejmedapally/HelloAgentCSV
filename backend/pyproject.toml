@@ -12,6 +12,7 @@ dependencies = [
     "langchain-experimental>=0.3.0",
     "langchain-anthropic>=0.3.0",
     "python-multipart>=0.0.12",
+    "pydantic-settings>=2.0.0",
 ]
 
 [build-system]
