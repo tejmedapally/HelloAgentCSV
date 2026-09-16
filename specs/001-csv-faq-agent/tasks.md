@@ -63,8 +63,8 @@
 - [x] T015 [P] [US1] Implement Claude + LangChain pandas dataframe agent with data-only system prompt and low temperature in `backend/app/services/agent_service.py`
 - [x] T016 [US1] Wire minimal upload path `POST /api/v1/sources` (multipart) into session store using `csv_service` in `backend/app/api/routes.py` (enough for MVP ask flow)
 - [x] T017 [US1] Implement `POST /api/v1/ask` to refuse empty sessions, invoke `agent_service`, and return `AskResponse` (`ok` | `not_found` | `error`) in `backend/app/api/routes.py`
-- [ ] T018 [US1] Extend `frontend/api_client.py` with `upload_sources` and `ask` methods matching the OpenAPI contract
-- [ ] T019 [US1] Add Streamlit controls in `frontend/app.py` to upload at least one CSV, enter a question, submit ask, and display answer text
+- [x] T018 [US1] Extend `frontend/api_client.py` with `upload_sources` and `ask` methods matching the OpenAPI contract
+- [x] T019 [US1] Add Streamlit controls in `frontend/app.py` to upload at least one CSV, enter a question, submit ask, and display answer text
 
 **Checkpoint**: User Story 1 is fully functional and testable independently (upload → ask → grounded or not-found answer)
 
