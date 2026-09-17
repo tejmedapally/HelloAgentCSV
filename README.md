@@ -28,21 +28,26 @@ Setup cheat sheets:
 - [`docs/02-speckit-setup.md`](docs/02-speckit-setup.md)
 - [`docs/03-git-github-setup.md`](docs/03-git-github-setup.md)
 
-## Quick local setup (after implementation tasks)
+## Quick local setup
 
 ```powershell
-# Backend
-cd backend
-copy .env.example .env   # then set ANTHROPIC_API_KEY
-uv sync --system-certs
+# Env files (once)
+copy backend\.env.example backend\.env   # set ANTHROPIC_API_KEY
+copy frontend\.env.example frontend\.env # BACKEND_URL=http://localhost:8000
 
-# Frontend (another terminal)
-cd frontend
-copy .env.example .env   # BACKEND_URL=http://localhost:8000
+# Backend (terminal A)
+cd backend
 uv sync --system-certs
+uv run --system-certs uvicorn app.main:app --reload --port 8000
+
+# Frontend (terminal B)
+cd frontend
+uv sync --system-certs
+uv run --system-certs streamlit run app.py
 ```
 
-Full run steps and acceptance checks: **[quickstart.md](specs/001-csv-faq-agent/quickstart.md)**.
+Step-by-step uv / run / troubleshooting: **[docs/01-uv-venv-setup.md](docs/01-uv-venv-setup.md)**.  
+Full acceptance checks: **[quickstart.md](specs/001-csv-faq-agent/quickstart.md)**.
 
 ## Secrets
 

@@ -18,21 +18,32 @@ See also: [data-model.md](./data-model.md), [contracts/openapi.yaml](./contracts
 
 ## 1. Local backend + frontend (dev)
 
+Create env files once (if missing):
+
+```powershell
+cd C:\Projects\IK\Week_0
+copy backend\.env.example backend\.env
+copy frontend\.env.example frontend\.env
+# Edit backend\.env → set ANTHROPIC_API_KEY
+```
+
 ```powershell
 # Terminal A — backend
 cd backend
-uv sync   # or: uv pip install -r requirements.txt
-$env:ANTHROPIC_API_KEY = "your-key"
-uv run uvicorn app.main:app --reload --port 8000
+uv sync --system-certs
+uv run --system-certs uvicorn app.main:app --reload --port 8000
 
 # Terminal B — frontend
 cd frontend
-uv sync
-$env:BACKEND_URL = "http://localhost:8000"
-uv run streamlit run app.py
+uv sync --system-certs
+uv run --system-certs streamlit run app.py
 ```
 
 **Expected**: Browser opens Streamlit UI; health `GET http://localhost:8000/api/v1/health` returns `{"status":"ok"}`.
+
+**Also useful**: interactive API docs at http://localhost:8000/docs  
+
+More setup detail: [`docs/01-uv-venv-setup.md`](../../docs/01-uv-venv-setup.md).
 
 ## 2. Local Compose (parity with two images)
 

@@ -23,3 +23,24 @@ app.add_middleware(
 )
 
 app.include_router(router)
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    """Friendly landing note for browsers that hit the host root."""
+    return {
+        "message": "Hello Agent API is at /api/v1",
+        "health": "/api/v1/health",
+        "docs": "/docs",
+    }
+
+
+@app.get("/json/version")
+def json_version_probe() -> dict[str, str]:
+    """Quiet probes that expect a browser debug endpoint (e.g. DevTools)."""
+    return {
+        "message": "Not a browser debug endpoint. Hello Agent API is at /api/v1",
+        "health": "/api/v1/health",
+        "docs": "/docs",
+    }
+

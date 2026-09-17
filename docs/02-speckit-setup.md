@@ -130,7 +130,7 @@ per turn, review the diff, then commit before starting the next task.
 
 Task list for this feature: `specs/001-csv-faq-agent/tasks.md`  
 Do tasks in order: **T001 → T002 → T003 → …**  
-MVP stop line: through **T019** (then demo before continuing).
+User stories 1–3 are implemented through **T027**. Remaining work is Phase 6 polish (Docker/AWS/docs validation: T028+).
 
 ### Step 1: Ask the agent for only one task
 

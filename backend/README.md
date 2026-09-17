@@ -6,14 +6,23 @@ FastAPI service for session-scoped CSV upload and Claude-backed Q&A.
 
 ```powershell
 cd backend
+copy .env.example .env
+# Edit .env and set ANTHROPIC_API_KEY=...
 uv sync --system-certs
 ```
 
 (Omit `--system-certs` if your network does not need it.)
 
-## Run (after later tasks wire the app)
+## Run
 
 ```powershell
-$env:ANTHROPIC_API_KEY = "your-key"
-uv run uvicorn app.main:app --reload --port 8000
+uv run --system-certs uvicorn app.main:app --reload --port 8000
 ```
+
+| URL | Purpose |
+|-----|---------|
+| http://127.0.0.1:8000/api/v1/health | Health |
+| http://127.0.0.1:8000/docs | Swagger (Try it out) |
+| http://127.0.0.1:8000/redoc | ReDoc |
+
+Sessions are stored in memory — restarting the server clears them; create a new session and re-upload CSVs.
