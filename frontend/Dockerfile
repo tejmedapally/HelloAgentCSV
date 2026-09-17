@@ -23,8 +23,9 @@ COPY pyproject.toml README.md ./
 RUN pip install --upgrade pip \
     && pip install "streamlit>=1.40.0" "httpx>=0.27.0"
 
-COPY app.py api_client.py ./
+COPY app.py api_client.py ui_chrome.py ./
 COPY .streamlit ./.streamlit
+COPY static ./static
 
 RUN chown -R appuser:appuser /app
 

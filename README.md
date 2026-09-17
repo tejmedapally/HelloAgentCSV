@@ -1,4 +1,4 @@
-# Hello Agent — CSV FAQ Agent
+# Grounded FAQ — CSV FAQ Agent
 
 Week 0 mini-project: upload CSV FAQ/policy files, ask natural-language questions,
 and get answers grounded only in that table data (Claude API on the backend).

@@ -1,11 +1,13 @@
-# Streamlit defaults for Hello Agent — clean, simple support UI
+# Streamlit theme — Grounded FAQ
 
 [theme]
-primaryColor = "#1F4E79"
-backgroundColor = "#F7F8FA"
-secondaryBackgroundColor = "#EEF1F5"
-textColor = "#1A1A1A"
-font = "sans serif"
+base = "light"
+primaryColor = "#0E5C6B"
+backgroundColor = "#E5F0F2"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#0F3A44"
+font = "sans-serif"
+headingFont = "sans-serif"
 
 [client]
 toolbarMode = "minimal"

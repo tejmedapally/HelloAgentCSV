@@ -1,4 +1,4 @@
-# Hello Agent — local Docker Compose
+# Grounded FAQ — local Docker Compose
 #
 # Required env (set in shell or a repo-root `.env` file — never commit secrets):
 #   ANTHROPIC_API_KEY   Backend only — Claude API key

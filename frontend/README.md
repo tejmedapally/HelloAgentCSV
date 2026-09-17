@@ -1,4 +1,4 @@
-# Hello Agent — frontend
+# Grounded FAQ — frontend
 
 Streamlit UI that talks to the FastAPI backend over HTTP.
 
