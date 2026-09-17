@@ -12,7 +12,7 @@ Validation guide for the planned FE/BE split. Commands assume repo root
 - Docker Desktop (for Compose / image builds)
 - `ANTHROPIC_API_KEY` in the environment (backend only)
 - Sample CSVs under `datasets/` (migrated from `Datasets/`)
-- Optional: AWS CLI configured for ECR push + App Runner deploy
+- Optional: AWS CLI configured for ECR push + ECS Express Mode deploy
 
 See also: [data-model.md](./data-model.md), [contracts/openapi.yaml](./contracts/openapi.yaml).
 
@@ -85,7 +85,7 @@ High-level validation (details filled during implement tasks):
 
 1. `docker build` backend and frontend images.
 2. Push both to ECR.
-3. Create/update two App Runner services; set backend `ANTHROPIC_API_KEY`; set frontend `BACKEND_URL` to backend HTTPS URL.
+3. Create/update two **ECS Express Mode** services; set backend `ANTHROPIC_API_KEY`; set frontend `BACKEND_URL` to backend HTTPS URL.
 4. Open frontend URL; repeat checks A–E against deployed stack.
 
 **Expected**: FE reaches BE over HTTPS; answers still data-only; key never present in frontend env.

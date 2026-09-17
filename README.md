@@ -27,7 +27,7 @@ Setup cheat sheets:
 - [`docs/01-uv-venv-setup.md`](docs/01-uv-venv-setup.md)
 - [`docs/02-speckit-setup.md`](docs/02-speckit-setup.md)
 - [`docs/03-git-github-setup.md`](docs/03-git-github-setup.md)
-- [`docs/aws-deploy.md`](docs/aws-deploy.md) (ECR push; App Runner TBD)
+- [`docs/aws-deploy.md`](docs/aws-deploy.md) (ECR push + ECS Express Mode; one-shot: `scripts/deploy-aws.ps1`)
 
 ## Docker Compose (both services)
 

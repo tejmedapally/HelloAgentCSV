@@ -75,22 +75,22 @@ parity path.
 
 ## 6. AWS publish and deploy
 
-**Decision**:
-1. Build two images; tag and push to **Amazon ECR** (two repositories or two
-   image names).
-2. Deploy each image as an **AWS App Runner** service (backend + frontend).
-3. Configure frontend `BACKEND_URL` to the backend App Runner HTTPS URL.
-4. Inject `ANTHROPIC_API_KEY` into the **backend** service only (App Runner
-   secrets/env).
+**Decision** (updated 2026-09 — App Runner closed to new customers):
+1. Build two images; tag and push to **Amazon ECR** (two repositories).
+2. Deploy each image with **Amazon ECS Express Mode** (backend + frontend).
+3. Configure frontend `BACKEND_URL` to the backend public HTTPS URL.
+4. Inject `ANTHROPIC_API_KEY` into the **backend** service only (runtime
+   secrets/env — never on the frontend or in the image).
 
-**Rationale**: App Runner is the simplest managed path for container web apps
-without designing ECS/ALB/VPC for a warm-up. Still satisfies “two images on AWS
-that work together.”
+**Rationale**: AWS recommends ECS Express Mode as the App Runner successor:
+one-call-style deploy of a container (Fargate + load balancer + networking)
+while staying on the ECS path. Still satisfies “two images on AWS that work
+together.” See [App Runner availability change](https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html).
 
 **Alternatives considered**:
-- ECS Fargate + ALB — more control, more moving parts; deferred.
-- Single App Runner with sidecar — not two primary images as required.
-- EC2 Docker Compose — works but less “managed deploy” and more patching.
+- AWS App Runner — deferred/unavailable for new accounts after 2026-04-30.
+- Full ECS Fargate + ALB hand-rolled — more control, more moving parts.
+- EC2 Docker Compose — works but less managed deploy.
 
 ## 7. Sample datasets path
 

@@ -35,4 +35,4 @@ docker build -t hello-agent-backend .
 docker run --rm -p 8000:8000 -e ANTHROPIC_API_KEY=your-key hello-agent-backend
 ```
 
-Do not pass secrets via `docker build --build-arg`; use runtime `-e` / Compose / App Runner env only.
+Do not pass secrets via `docker build --build-arg`; use runtime `-e` / Compose / ECS Express Mode env only.

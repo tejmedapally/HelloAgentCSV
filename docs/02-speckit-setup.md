@@ -100,7 +100,7 @@ Attach `@docs/requirements.pdf` (or your requirements doc).
 /speckit-plan
 ```
 
-Include tech choices (FastAPI + Streamlit, Claude, ECR/App Runner, etc.).
+Include tech choices (FastAPI + Streamlit, Claude, ECR/ECS Express Mode, etc.).
 
 4. **Tasks** — ordered checklist  
 

@@ -32,5 +32,5 @@ USER appuser
 
 EXPOSE 8501
 
-# BACKEND_URL is overridable at runtime (Compose service name or App Runner HTTPS URL).
+# BACKEND_URL is overridable at runtime (Compose service name or ECS Express Mode HTTPS URL).
 CMD ["sh", "-c", "exec streamlit run app.py --server.address=0.0.0.0 --server.port=${PORT}"]

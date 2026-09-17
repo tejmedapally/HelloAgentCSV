@@ -15,7 +15,8 @@ answers grounded only in those tables (or an explicit not-found message).
 **Technical approach**: Monorepo with a **FastAPI** backend (Pandas + LangChain
 dataframe agent + **Anthropic Claude**) and a **Streamlit** frontend that talks
 to the backend over HTTP. Two Docker images, local Compose, publish to **ECR**,
-run on **AWS App Runner** so the frontend can call the backend URL. Sample CSVs
+run with **Amazon ECS Express Mode** so the frontend can call the backend URL.
+Sample CSVs
 live under `datasets/` (from existing `Datasets/`). No vector DB, no SQL DB,
 no OpenAI.
 
@@ -27,7 +28,7 @@ no OpenAI.
 - Backend: FastAPI, Uvicorn, Pandas, LangChain, `langchain-experimental`,
   `langchain-anthropic`, python-multipart
 - Frontend: Streamlit, `httpx` (or `requests`) to call backend
-- Ops: Docker, Docker Compose, AWS CLI (ECR + App Runner)
+- Ops: Docker, Docker Compose, AWS CLI (ECR + ECS Express Mode)
 
 **Storage**: In-memory session store on the backend (uploaded dataframes +
 metadata). No external database. Sample/reference CSVs on disk under `datasets/`.
@@ -62,8 +63,8 @@ Q&A; dual-image AWS deploy path documented and runnable.
 | I. Spec-Driven Development | PASS | Work traces to `spec.md` + this plan; tasks/implement follow |
 | II. Clean Separated Architecture | PASS | `backend/`, `frontend/`, `datasets/`; HTTP API contract in `contracts/` |
 | III. Data-Only Answers | PASS | System prompt + low temperature + not-found path in agent service |
-| IV. Containerized Dual-Image Delivery | PASS | Two Dockerfiles, Compose, ECR push, App Runner deploy of both |
-| V. Simplicity and Predictability | PASS | No vector/SQL DB; Streamlit UI; in-memory sessions; App Runner over ECS |
+| IV. Containerized Dual-Image Delivery | PASS | Two Dockerfiles, Compose, ECR push, ECS Express Mode deploy of both |
+| V. Simplicity and Predictability | PASS | No vector/SQL DB; Streamlit UI; in-memory sessions; ECS Express Mode over hand-rolled ECS/ALB |
 
 **Post-Phase 1 re-check**: PASS — data model is session-scoped only; contracts are
 a small REST surface; quickstart validates FE→BE→Claude without extra services.

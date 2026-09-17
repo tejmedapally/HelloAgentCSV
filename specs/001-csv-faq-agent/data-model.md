@@ -16,7 +16,7 @@ In-memory only (no persistent database). Entities map to backend session state.
 
 **Lifecycle**: Created when client starts or first API call without ID → used for
 uploads and asks → destroyed on process restart or explicit clear/delete.
-Multi-instance production note: App Runner multiple instances would not share
+Multi-instance production note: multiple ECS Express Mode / Fargate tasks would not share
 memory; Week 0 assumes single backend instance or sticky sessions. Document in
 deploy notes; scale-out would need shared store (out of scope unless amended).
 
