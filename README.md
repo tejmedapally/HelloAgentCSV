@@ -27,6 +27,18 @@ Setup cheat sheets:
 - [`docs/01-uv-venv-setup.md`](docs/01-uv-venv-setup.md)
 - [`docs/02-speckit-setup.md`](docs/02-speckit-setup.md)
 - [`docs/03-git-github-setup.md`](docs/03-git-github-setup.md)
+- [`docs/aws-deploy.md`](docs/aws-deploy.md) (ECR push; App Runner TBD)
+
+## Docker Compose (both services)
+
+```powershell
+# From repo root — set ANTHROPIC_API_KEY in the environment or a root .env file
+$env:ANTHROPIC_API_KEY = "sk-ant-your-key"
+docker compose up --build
+```
+
+- UI: http://localhost:8501  
+- API health: http://localhost:8000/api/v1/health  
 
 ## Quick local setup
 

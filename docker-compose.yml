@@ -1,0 +1,56 @@
+# Hello Agent — local Docker Compose
+#
+# Required env (set in shell or a repo-root `.env` file — never commit secrets):
+#   ANTHROPIC_API_KEY   Backend only — Claude API key
+#
+# Optional:
+#   Backend PORT inside the container defaults to 8000
+#   Frontend BACKEND_URL is wired to http://backend:8000 on the Compose network
+#
+# Usage:
+#   copy backend\.env.example .env   # or set $env:ANTHROPIC_API_KEY
+#   # ensure .env contains ANTHROPIC_API_KEY=...
+#   docker compose up --build
+#
+# UI:      http://localhost:8501
+# API:     http://localhost:8000/api/v1/health
+# Swagger: http://localhost:8000/docs
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: hello-agent-backend:local
+    ports:
+      - "8000:8000"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in the environment or a repo-root .env file}
+      PORT: "8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    image: hello-agent-frontend:local
+    ports:
+      - "8501:8501"
+    environment:
+      # In-cluster DNS name for the backend service (not localhost)
+      BACKEND_URL: http://backend:8000
+      PORT: "8501"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
