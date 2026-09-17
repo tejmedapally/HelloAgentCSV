@@ -115,6 +115,9 @@
 - [x] T032 Document AWS **ECS Express Mode** deploy for backend and frontend (frontend `BACKEND_URL` → backend HTTPS URL; secrets on backend only) in `docs/aws-deploy.md` — *replaces App Runner (closed to new customers; AWS recommends ECS Express Mode)*
 - [x] T033 Align root `README.md` and `specs/001-csv-faq-agent/quickstart.md` with final ports, compose commands, and env var names
 - [x] T034 Run quickstart validation scenarios A–G from `specs/001-csv-faq-agent/quickstart.md` locally (Compose or dual-terminal) and fix any gaps
+- [x] T036 Require shared `BACKEND_API_KEY` via `X-API-Key` on backend API routes (leave `GET /api/v1/health` open for load-balancer checks) in `backend/app/`
+- [x] T037 Send `BACKEND_API_KEY` from the Streamlit client on all API calls and add shared-password UI gate (`APP_PASSWORD`) in `frontend/`
+- [x] T038 Document `BACKEND_API_KEY` + `APP_PASSWORD` in `.env.example` files, `docker-compose.yml`, `README.md`, `quickstart.md`, and `docs/aws-deploy.md`
 
 ---
 

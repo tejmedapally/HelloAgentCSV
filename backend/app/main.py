@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
+from app.middleware.api_key import ApiKeyMiddleware
 
 app = FastAPI(
     title="Hello Agent CSV FAQ API",
@@ -11,6 +12,7 @@ app = FastAPI(
     description="Session-scoped CSV upload, preview, and data-only Q&A.",
 )
 
+# Outer CORS so browsers (if any) still get headers on 401 from API key gate.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -21,8 +23,30 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(ApiKeyMiddleware)
 
 app.include_router(router)
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    """Friendly landing note for browsers that hit the host root."""
+    return {
+        "message": "Hello Agent API is at /api/v1",
+        "health": "/api/v1/health",
+        "docs": "/docs",
+    }
+
+
+@app.get("/json/version")
+def json_version_probe() -> dict[str, str]:
+    """Quiet probes that expect a browser debug endpoint (e.g. DevTools)."""
+    return {
+        "message": "Not a browser debug endpoint. Hello Agent API is at /api/v1",
+        "health": "/api/v1/health",
+        "docs": "/docs",
+    }
+
 
 
 @app.get("/")

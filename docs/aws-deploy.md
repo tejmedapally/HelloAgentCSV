@@ -232,6 +232,8 @@ You can also open **ECR** in the AWS Console and confirm both repositories show 
 | Variable | Where | Notes |
 |----------|--------|--------|
 | `ANTHROPIC_API_KEY` | **Backend** only | Never bake into Docker build; never put on the frontend |
+| `BACKEND_API_KEY` | **Backend + frontend** (same value) | When set, API requires `X-API-Key` (except `GET /api/v1/health` for ALB) |
+| `APP_PASSWORD` | **Frontend** only | Shared Streamlit login password; share only with people who should use the UI |
 | `BACKEND_URL` | **Frontend** only | Backend public HTTPS URL after ECS Express Mode deploy |
 
 ---
@@ -247,9 +249,9 @@ Local Compose starts `backend`, waits until healthy, then starts `frontend` with
 `BACKEND_URL=http://backend:8000`. On AWS there is **no** shared Compose DNS
 name, so you must:
 
-1. Deploy **backend** (port **8000**, health `/api/v1/health`, `ANTHROPIC_API_KEY`)
+1. Deploy **backend** (port **8000**, health `/api/v1/health`, `ANTHROPIC_API_KEY`, **`BACKEND_API_KEY`**)
 2. Wait until `GET {BACKEND_URL}/api/v1/health` returns `{"status":"ok"}`
-3. Deploy **frontend** (port **8501**, health `/`, `BACKEND_URL` = backend HTTPS URL)
+3. Deploy **frontend** (port **8501**, health `/`, `BACKEND_URL` = backend HTTPS URL, same **`BACKEND_API_KEY`**, **`APP_PASSWORD`**)
 
 Do **not** set container port to **80** — targets registered on port 80 will stay
 **Unhealthy** because the apps listen on **8000** / **8501**.
@@ -359,6 +361,7 @@ $INFRA_ROLE = "arn:aws:iam::${env:AWS_ACCOUNT_ID}:role/ecsInfrastructureRoleForE
    - Environment variables:
      - Prefer **Secret** type pointing at Secrets Manager for `ANTHROPIC_API_KEY`
      - Or (learning only) plain env `ANTHROPIC_API_KEY` = your real key — never commit it
+     - **`BACKEND_API_KEY`** = a long random shared secret (same value on the frontend)
    - CPU architecture: **X86_64** (matches `linux/amd64` images from this repo)
 5. Create → wait until deployment is **ACTIVE** and target group shows **Healthy** on port **8000**.
 6. Copy the **Application URL** (form like `https://<name>.ecs.<region>.on.aws`).
@@ -386,9 +389,11 @@ Expect `{"status":"ok"}`. Only then deploy the frontend.
    - Health check path: **`/`** (Streamlit)
    - Environment variable:
      - `BACKEND_URL` = the **backend Application URL** from F2 (HTTPS, no trailing slash)
+     - **`BACKEND_API_KEY`** = **same** value as on the backend
+     - **`APP_PASSWORD`** = shared UI password you will give to graders/users
    - Do **not** set `ANTHROPIC_API_KEY` on the frontend
 5. Create → wait until **ACTIVE** and targets **Healthy** on port **8501**.
-6. Open the frontend Application URL in a browser → upload a CSV from `datasets/` → ask.
+6. Open the frontend Application URL → enter `APP_PASSWORD` → upload a CSV from `datasets/` → ask.
 
 ### F4. Deploy with AWS CLI (optional, step-by-step)
 
@@ -401,12 +406,15 @@ Use `ConvertTo-Json` so PowerShell quoting stays reliable. Prefer **F9** for one
 # Do not commit the real key.
 $ANTHROPIC_API_KEY = $env:ANTHROPIC_API_KEY
 if (-not $ANTHROPIC_API_KEY) { throw "Set ANTHROPIC_API_KEY first" }
+$BACKEND_API_KEY = $env:BACKEND_API_KEY
+if (-not $BACKEND_API_KEY) { throw "Set BACKEND_API_KEY first (shared with frontend)" }
 
 $backendContainer = @{
   image         = "$ECR/hello-agent-backend:$TAG"
   containerPort = 8000
   environment   = @(
     @{ name = "ANTHROPIC_API_KEY"; value = $ANTHROPIC_API_KEY }
+    @{ name = "BACKEND_API_KEY"; value = $BACKEND_API_KEY }
     @{ name = "PORT"; value = "8000" }
   )
 } | ConvertTo-Json -Compress -Depth 5
@@ -440,12 +448,18 @@ curl.exe -s "$BACKEND_URL/api/v1/health"   # must return {"status":"ok"}
 
 ```powershell
 $BACKEND_URL = "https://hello-agent-backend.ecs.us-east-1.on.aws"  # your real URL
+$APP_PASSWORD = $env:APP_PASSWORD
+if (-not $APP_PASSWORD) { throw "Set APP_PASSWORD first" }
+if (-not $BACKEND_API_KEY) { $BACKEND_API_KEY = $env:BACKEND_API_KEY }
+if (-not $BACKEND_API_KEY) { throw "Set BACKEND_API_KEY first" }
 
 $frontendContainer = @{
   image         = "$ECR/hello-agent-frontend:$TAG"
   containerPort = 8501
   environment   = @(
     @{ name = "BACKEND_URL"; value = $BACKEND_URL }
+    @{ name = "BACKEND_API_KEY"; value = $BACKEND_API_KEY }
+    @{ name = "APP_PASSWORD"; value = $APP_PASSWORD }
     @{ name = "PORT"; value = "8501" }
   )
 } | ConvertTo-Json -Compress -Depth 5
@@ -488,7 +502,8 @@ frontend `BACKEND_URL` the same way.)
 | EC2 → Target groups → registered port | **8000** (backend) / **8501** (frontend), not 80 |
 | Open `{FRONTEND_URL}` | Hello Agent UI loads |
 | Upload `datasets/ecommerce_faqs.csv` + ask | Grounded answer or clear not-found |
-| Frontend task env | Has `BACKEND_URL` only — **no** Anthropic key |
+| Frontend task env | Has `BACKEND_URL`, `BACKEND_API_KEY`, `APP_PASSWORD` — **no** Anthropic key |
+| Backend without `X-API-Key` | `POST /api/v1/session` → **401** (health still 200) |
 
 ### F7. Cost / cleanup notes
 
@@ -516,16 +531,17 @@ Script: [`scripts/deploy-aws.ps1`](../scripts/deploy-aws.ps1)
 It:
 
 1. (Optional) builds/pushes both images to ECR for `linux/amd64`
-2. Creates Express Mode **backend** with port **8000** + `ANTHROPIC_API_KEY`
+2. Creates Express Mode **backend** with port **8000** + `ANTHROPIC_API_KEY` + `BACKEND_API_KEY`
 3. Waits until `/api/v1/health` succeeds
-4. Creates Express Mode **frontend** with port **8501** + `BACKEND_URL` set to the backend HTTPS URL
+4. Creates Express Mode **frontend** with port **8501** + `BACKEND_URL` + same `BACKEND_API_KEY` + `APP_PASSWORD`
 
 ```powershell
 cd C:\Projects\IK\Week_0
 $env:Path = "$env:LOCALAPPDATA\Programs\Amazon\AWSCLIV2;" + $env:Path
 
-# Key from environment or repo-root / backend .env (gitignored)
 $env:ANTHROPIC_API_KEY = "sk-ant-your-key"   # or rely on .env
+$env:BACKEND_API_KEY = "change-me-long-random"
+$env:APP_PASSWORD = "share-with-graders-only"
 
 # First time: ensure F1 roles + inline policy exist
 .\scripts\deploy-aws.ps1

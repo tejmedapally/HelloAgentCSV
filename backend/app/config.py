@@ -23,6 +23,13 @@ class Settings(BaseSettings):
         default="",
         description="Anthropic Claude API key (required at ask-time)",
     )
+    backend_api_key: str = Field(
+        default="",
+        description=(
+            "Shared secret for X-API-Key. When non-empty, all API routes except "
+            "health require this header (frontend must send the same value)."
+        ),
+    )
     anthropic_model: str = Field(
         default="claude-haiku-4-5-20251001",
         description="Claude model id for the dataframe agent",

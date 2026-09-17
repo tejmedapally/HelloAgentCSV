@@ -20,10 +20,14 @@ scripts/     Optional AWS one-shot deploy (`deploy-aws.ps1`)
 | Variable | Where | Example |
 |----------|--------|---------|
 | `ANTHROPIC_API_KEY` | **Backend only** | set in `backend/.env`, root `.env` (Compose), or ECS env/secret |
+| `BACKEND_API_KEY` | **Backend + frontend** (same value) | when set, API requires header `X-API-Key` (frontend sends it; health stays public) |
+| `APP_PASSWORD` | **Frontend only** | when set, Streamlit shows a shared-password login before the app |
 | `BACKEND_URL` | **Frontend only** | local: `http://localhost:8000` · Compose: `http://backend:8000` · AWS: backend HTTPS URL |
 | `PORT` | optional | backend default `8000`, frontend/Streamlit default `8501` |
 
 Never put `ANTHROPIC_API_KEY` on the frontend. Never commit real keys.
+For AWS demos, set both `BACKEND_API_KEY` and `APP_PASSWORD`.
+
 
 ## Spec-driven development
 

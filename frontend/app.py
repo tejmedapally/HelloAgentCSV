@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import streamlit as st
 from httpx import HTTPError, HTTPStatusError
 
@@ -16,6 +18,37 @@ st.set_page_config(
 
 st.title("Hello Agent")
 st.caption("Answers come only from your uploaded CSV files — not from general knowledge.")
+
+
+def _app_password() -> str:
+    return (os.getenv("APP_PASSWORD") or "").strip()
+
+
+def _require_login() -> None:
+    """Shared-password gate. Skipped when APP_PASSWORD is unset (local/dev)."""
+    expected = _app_password()
+    if not expected:
+        return
+    if st.session_state.get("authenticated"):
+        with st.sidebar:
+            if st.button("Log out", use_container_width=True):
+                st.session_state.authenticated = False
+                st.rerun()
+        return
+
+    st.info("Enter the shared access password to use Hello Agent.")
+    with st.form("login_form"):
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Log in", type="primary")
+    if submitted:
+        if password == expected:
+            st.session_state.authenticated = True
+            st.rerun()
+        st.error("Incorrect password.")
+    st.stop()
+
+
+_require_login()
 
 st.info(
     "**How to use:**  \n"

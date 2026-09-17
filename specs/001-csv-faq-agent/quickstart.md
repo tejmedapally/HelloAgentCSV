@@ -12,8 +12,10 @@ Validation guide for the FE/BE split. Commands assume repo root
 |------|--------|
 | Backend port | **8000** |
 | Frontend / Streamlit port | **8501** |
-| Health | `GET http://localhost:8000/api/v1/health` → `{"status":"ok"}` |
+| Health | `GET http://localhost:8000/api/v1/health` → `{"status":"ok"}` (always public) |
 | `ANTHROPIC_API_KEY` | Backend only (`backend/.env`, root `.env` for Compose, or ECS secret/env) |
+| `BACKEND_API_KEY` | Same value on backend + frontend; sent as `X-API-Key` (optional locally; set on AWS) |
+| `APP_PASSWORD` | Frontend only; shared login password (optional locally; set on AWS) |
 | `BACKEND_URL` (local dual-terminal) | `http://localhost:8000` in `frontend/.env` |
 | `BACKEND_URL` (Compose) | `http://backend:8000` (set in `docker-compose.yml`) |
 | `BACKEND_URL` (AWS) | Backend Express Mode HTTPS URL (no trailing slash) |
@@ -36,8 +38,9 @@ Create env files once (if missing):
 cd C:\Projects\IK\Week_0
 copy backend\.env.example backend\.env
 copy frontend\.env.example frontend\.env
-# Edit backend\.env → ANTHROPIC_API_KEY=...
+# Edit backend\.env → ANTHROPIC_API_KEY=... (and optionally BACKEND_API_KEY=...)
 # Confirm frontend\.env → BACKEND_URL=http://localhost:8000
+# Optional: same BACKEND_API_KEY on frontend; APP_PASSWORD for UI login
 ```
 
 ```powershell
@@ -67,6 +70,9 @@ From repo root:
 ```powershell
 cd C:\Projects\IK\Week_0
 $env:ANTHROPIC_API_KEY = "sk-ant-your-key"   # or put ANTHROPIC_API_KEY=... in a root .env
+# Optional but recommended:
+# $env:BACKEND_API_KEY = "change-me-long-random"
+# $env:APP_PASSWORD = "share-with-graders-only"
 docker compose up --build
 ```
 
@@ -112,10 +118,10 @@ Full steps: [`docs/aws-deploy.md`](../../docs/aws-deploy.md).
 Summary:
 
 1. Build and push `hello-agent-backend` / `hello-agent-frontend` to ECR (ports **8000** / **8501** in the images).
-2. Deploy **backend** Express Mode first (`ANTHROPIC_API_KEY`, health `/api/v1/health`).
-3. Deploy **frontend** with `BACKEND_URL` = backend HTTPS Application URL (health `/`).
-4. Or one-shot: `.\scripts\deploy-aws.ps1` (see Part F9 in aws-deploy).
-5. Open frontend URL; repeat checks A–E against the deployed stack.
+2. Deploy **backend** Express Mode first (`ANTHROPIC_API_KEY`, **`BACKEND_API_KEY`**, health `/api/v1/health`).
+3. Deploy **frontend** with `BACKEND_URL` = backend HTTPS Application URL, same **`BACKEND_API_KEY`**, and **`APP_PASSWORD`** (health `/`).
+4. Or one-shot: `.\scripts\deploy-aws.ps1` (see Part F9 in aws-deploy) — extend env vars as documented there.
+5. Open frontend URL → enter `APP_PASSWORD` → upload/ask. Direct calls to backend API without `X-API-Key` should return **401** (except health).
 
 **Expected**: FE reaches BE over HTTPS; answers still data-only; key never present in frontend env.
 

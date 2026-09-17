@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 
 SESSION_HEADER = "X-Session-Id"
+API_KEY_HEADER = "X-API-Key"
 DEFAULT_BACKEND_URL = "http://localhost:8000"
 
 
@@ -37,7 +38,15 @@ class BackendClient:
             base_url or os.getenv("BACKEND_URL", DEFAULT_BACKEND_URL)
         ).rstrip("/")
         self.session_id: str | None = None
-        self._client = httpx.Client(base_url=self.base_url, timeout=timeout)
+        self._api_key = (os.getenv("BACKEND_API_KEY") or "").strip()
+        headers: dict[str, str] = {}
+        if self._api_key:
+            headers[API_KEY_HEADER] = self._api_key
+        self._client = httpx.Client(
+            base_url=self.base_url,
+            timeout=timeout,
+            headers=headers,
+        )
 
     def close(self) -> None:
         self._client.close()
@@ -55,7 +64,7 @@ class BackendClient:
         return sid
 
     def health(self) -> dict[str, Any]:
-        """GET /api/v1/health."""
+        """GET /api/v1/health (public; no API key required on the server)."""
         response = self._client.get("/api/v1/health")
         response.raise_for_status()
         return response.json()

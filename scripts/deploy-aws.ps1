@@ -5,9 +5,11 @@
 #   - AWS CLI v2 on PATH (or under %LOCALAPPDATA%\Programs\Amazon\AWSCLIV2)
 #   - Docker Desktop running (if -SkipPush is not set)
 #   - IAM roles from docs/aws-deploy.md Part F1
-#   - ANTHROPIC_API_KEY in the environment or a repo-root .env (never commit)
+#   - ANTHROPIC_API_KEY, BACKEND_API_KEY, APP_PASSWORD in env or .env (never commit)
 #
 # Usage (from repo root):
+#   $env:BACKEND_API_KEY = "change-me-long-random"
+#   $env:APP_PASSWORD = "share-with-graders-only"
 #   .\scripts\deploy-aws.ps1
 #   .\scripts\deploy-aws.ps1 -SkipPush          # images already in ECR
 #   .\scripts\deploy-aws.ps1 -Region us-east-1
@@ -47,6 +49,24 @@ if (-not $env:ANTHROPIC_API_KEY) {
 }
 if (-not $env:ANTHROPIC_API_KEY) {
     throw "Set ANTHROPIC_API_KEY in the environment or in .env / backend/.env before deploying."
+}
+
+foreach ($name in @("BACKEND_API_KEY", "APP_PASSWORD")) {
+    if (-not (Get-Item "Env:$name" -ErrorAction SilentlyContinue).Value) {
+        $fromRoot = Get-DotEnvValue -Name $name -Path (Join-Path $RepoRoot ".env")
+        $fromBackend = Get-DotEnvValue -Name $name -Path (Join-Path $RepoRoot "backend\.env")
+        $fromFrontend = Get-DotEnvValue -Name $name -Path (Join-Path $RepoRoot "frontend\.env")
+        $val = $fromRoot
+        if (-not $val) { $val = $fromBackend }
+        if (-not $val) { $val = $fromFrontend }
+        if ($val) { Set-Item -Path "Env:$name" -Value $val }
+    }
+}
+if (-not $env:BACKEND_API_KEY) {
+    throw "Set BACKEND_API_KEY (same secret on backend + frontend) before deploying."
+}
+if (-not $env:APP_PASSWORD) {
+    throw "Set APP_PASSWORD (Streamlit shared login) before deploying."
 }
 
 $env:AWS_REGION = $Region
@@ -119,6 +139,7 @@ $backendContainer = @{
     containerPort = 8000
     environment   = @(
         @{ name = "ANTHROPIC_API_KEY"; value = $env:ANTHROPIC_API_KEY }
+        @{ name = "BACKEND_API_KEY"; value = $env:BACKEND_API_KEY }
         @{ name = "PORT"; value = "8000" }
     )
 } | ConvertTo-Json -Compress -Depth 5
@@ -170,6 +191,8 @@ $frontendContainer = @{
     containerPort = 8501
     environment   = @(
         @{ name = "BACKEND_URL"; value = $BackendUrl }
+        @{ name = "BACKEND_API_KEY"; value = $env:BACKEND_API_KEY }
+        @{ name = "APP_PASSWORD"; value = $env:APP_PASSWORD }
         @{ name = "PORT"; value = "8501" }
     )
 } | ConvertTo-Json -Compress -Depth 5
@@ -206,4 +229,4 @@ while ((Get-Date) -lt $deadline) {
 Write-Host "`n=== Deploy submitted ===" -ForegroundColor Green
 Write-Host "Backend:  $BackendUrl"
 Write-Host "Frontend: $(if ($FrontendUrl) { $FrontendUrl } else { '(check ECS console Application URL)' })"
-Write-Host "Open the frontend URL → upload datasets/*.csv → ask."
+Write-Host "Open the frontend URL → enter APP_PASSWORD → upload datasets/*.csv → ask."
