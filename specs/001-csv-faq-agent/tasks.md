@@ -113,9 +113,8 @@
 - [x] T030 Add `docker-compose.yml` at repo root wiring backend + frontend and documenting required env vars
 - [x] T031 [P] Document ECR push steps for both images in `docs/aws-deploy.md`
 - [x] T032 Document AWS **ECS Express Mode** deploy for backend and frontend (frontend `BACKEND_URL` → backend HTTPS URL; secrets on backend only) in `docs/aws-deploy.md` — *replaces App Runner (closed to new customers; AWS recommends ECS Express Mode)*
-- [ ] T033 Align root `README.md` and `specs/001-csv-faq-agent/quickstart.md` with final ports, compose commands, and env var names
-- [ ] T034 Run quickstart validation scenarios A–G from `specs/001-csv-faq-agent/quickstart.md` locally (Compose or dual-terminal) and fix any gaps
-- [ ] T035 Archive or clearly mark legacy stub `Hello_Agent_CSV_FAQ_Agent_(Stub_File).ipynb` as non-runtime so the supported path is `frontend/` + `backend/`
+- [x] T033 Align root `README.md` and `specs/001-csv-faq-agent/quickstart.md` with final ports, compose commands, and env var names
+- [x] T034 Run quickstart validation scenarios A–G from `specs/001-csv-faq-agent/quickstart.md` locally (Compose or dual-terminal) and fix any gaps
 
 ---
 
