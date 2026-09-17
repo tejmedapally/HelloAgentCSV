@@ -108,8 +108,8 @@
 
 **Purpose**: Containers, AWS delivery, docs, and end-to-end validation
 
-- [ ] T028 [P] Add backend container build in `backend/Dockerfile` (non-root where practical; `ANTHROPIC_API_KEY` only via runtime env)
-- [ ] T029 [P] Add frontend container build in `frontend/Dockerfile` with `BACKEND_URL` runtime env
+- [x] T028 [P] Add backend container build in `backend/Dockerfile` (non-root where practical; `ANTHROPIC_API_KEY` only via runtime env)
+- [x] T029 [P] Add frontend container build in `frontend/Dockerfile` with `BACKEND_URL` runtime env
 - [ ] T030 Add `docker-compose.yml` at repo root wiring backend + frontend and documenting required env vars
 - [ ] T031 [P] Document ECR push steps for both images in `docs/aws-deploy.md`
 - [ ] T032 Document AWS App Runner deploy for backend and frontend (frontend `BACKEND_URL` → backend HTTPS URL; secrets on backend only) in `docs/aws-deploy.md`
